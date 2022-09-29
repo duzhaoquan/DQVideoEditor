@@ -42,7 +42,7 @@ extension MTLCommandBuffer{
             renderEncoder.setVertexBytes(textureCoodinates, length: textureCoodinates.count * MemoryLayout<Float> .size, index: 1 + textureIndex)
             renderEncoder.setFragmentTexture(inputTexture[UInt(textureIndex)]!.texture, index: textureIndex)
         }
-        
+        //设置具体滤镜的参数
         uniformSetting?.restorShaderSettings(renderEncoder: renderEncoder)
         renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)//二维图像四个顶点
         renderEncoder.endEncoding()
