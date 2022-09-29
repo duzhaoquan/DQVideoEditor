@@ -1,9 +1,8 @@
 //
 //  YUVToRGBConversion.swift
-//  VideoLab
+//  DQVideoEditor
 //
-//  Created by Bear on 2020/8/23.
-//  Copyright © 2020 Chocolate. All rights reserved.
+//  Created by zhaoquan.du on 2022/9/23.
 //
 
 import simd

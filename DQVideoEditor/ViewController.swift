@@ -43,10 +43,10 @@ class ViewController: UITableViewController {
         
         let editor = DQVideoEditor(renderComposition: composition)
         
-        
-        
         return editor
     }
+    
+    
     
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         44

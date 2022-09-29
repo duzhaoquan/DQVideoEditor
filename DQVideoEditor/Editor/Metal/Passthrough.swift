@@ -1,6 +1,6 @@
 //
 //  Passthrough.swift
-//  VideoLab
+//  DQVideoEditor
 //
 //  Created by Bear on 2020/8/12.
 //  Copyright © 2020 Chocolate. All rights reserved.

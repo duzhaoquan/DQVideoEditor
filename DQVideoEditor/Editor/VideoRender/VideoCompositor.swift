@@ -9,8 +9,8 @@ import AVFoundation
 
 class VideoCompositor: NSObject, AVVideoCompositing {
     
-    private var renderingQueue = DispatchQueue(label: "com.studio.VideoLab.renderingqueue")
-    private var renderContextQueue = DispatchQueue(label: "com.studio.VideoLab.rendercontextqueue")
+    private var renderingQueue = DispatchQueue(label: "com.studio.VideoEditor.renderingqueue")
+    private var renderContextQueue = DispatchQueue(label: "com.studio.VideoEditor.rendercontextqueue")
     private var renderContext: AVVideoCompositionRenderContext?
     private var shouldCancelAllRequests = false
     private let layerCompositor = LayerCompositor()
