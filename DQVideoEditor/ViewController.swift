@@ -11,9 +11,12 @@ import UIKit
 class ViewController: UITableViewController {
 
     let titiles = ["simple","multi lalyer","audio volum ramp","text animation","key frame animation","layer group","transition2D"]
+    var filterTextures: [Texture] = []
+    let renderSize = CGSize(width: 1280, height: 720)
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        filterTextures = makeFilterTexture()
     }
     
 
@@ -46,8 +49,100 @@ class ViewController: UITableViewController {
         return editor
     }
     
+    func multiLayerDemo() -> DQVideoEditor{
+        //layer1
+        guard var url = Bundle.main.url(forResource: "sea", withExtension: "mp4") else{
+            fatalError(" no url")
+        }
+        var asset = AVAsset(url: url)
+        var source = AVAssetSource(asset: asset)
+        source.selectedTimeRange = CMTimeRange(start: .zero, duration: asset.duration)
+        var timeRange = source.selectedTimeRange
+        let renderLaayer1 = RenderLayer(timeRange: timeRange,source: source)
+        
+        var center = CGPoint(x: 0.25, y: 0.25)
+        let layer1Size = source.videoSize
+        if let  layer1Size = layer1Size {
+            center.x = layer1Size.width * 0.5 / 2.0 / renderSize.width
+            center.y = layer1Size.height * 0.5 / 2.0 / renderSize.height
+        }
+        var transform = Transform(center: center, rotation: 0, scale: 0.5)
+        renderLaayer1.transform = transform
+        
+        //layer2
+        let image = UIImage(named: "image1.JPG")
+        let imagesource = ImageSource(cgImage: image?.cgImage)
+        imagesource.selectedTimeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: 15, preferredTimescale: 600))
+        timeRange = imagesource.selectedTimeRange
+        let renderLayer2 = RenderLayer(timeRange: timeRange,source: imagesource)
+        
+        var filter = LookupFilter()
+        filter.addTexture(filterTextures[0], at: 0)
+        renderLayer2.operations = [filter]
+        
+        transform = Transform(center: CGPoint(x: 0.25, y: 0.75), rotation: 0, scale: 1.0/8)
+        renderLayer2.transform = transform
+        
+        //layer3
+        guard let url = Bundle.main.url(forResource: "cute", withExtension: "mp4") else{
+            fatalError(" no url")
+        }
+        asset = AVAsset(url: url)
+        source = AVAssetSource(asset: asset)
+        source.selectedTimeRange = CMTimeRange(start: CMTime.zero, duration: asset.duration)
+        timeRange = source.selectedTimeRange
+        let renderLayer3 = RenderLayer(timeRange: timeRange, source: source)
+        filter = LookupFilter()
+        filter.addTexture(filterTextures[1], at:0)
+        renderLayer3.operations = [filter]
+        var scale:Float = 1/3.0
+        var x = 0.75
+        var y = 0.25
+        if let layer1Size = layer1Size,let layer3Size = source.videoSize {
+            scale = Float((renderSize.width - layer1Size.width/2.0) / layer3Size.width)
+            x = (renderSize.width - layer3Size.width * CGFloat(scale) / 2.0) / renderSize.width
+            y = ((layer3Size.height * CGFloat(scale)) / 2) / renderSize.height
+        }
+        renderLayer3.transform = Transform(center: CGPoint(x: x, y: y), rotation: 0, scale: scale)
+        
+        //layer4
+        guard let url = Bundle.main.url(forResource: "bamboo", withExtension: "mp4") else{
+            fatalError("no url")
+        }
+        asset = AVAsset(url: url)
+        source = AVAssetSource(asset: asset)
+        source.selectedTimeRange = CMTimeRange(start: CMTime.zero, duration: asset.duration)
+        timeRange = source.selectedTimeRange
+        let renderLayer4 = RenderLayer(timeRange: timeRange, source: source)
+        filter = LookupFilter()
+        filter.addTexture(filterTextures[3], at:0)
+        renderLayer4.operations = [filter]
+        renderLayer4.transform = Transform(center: CGPoint(x: 0.75, y: 0.75), rotation: 0, scale: 1/3.0)
+        
+        let composition = RenderComposition()
+        composition.renderSize = renderSize
+        composition.layers = [renderLaayer1,renderLayer3]
+        
+        composition.backgroundColor = Color(red: 21, green: 1, blue: 47)
+        let videoEditor = DQVideoEditor(renderComposition: composition)
+        return videoEditor
+    }
     
     
+    func makeFilterTexture() -> [Texture]{
+        let filterNames = ["LUT_M01", "LUT_M02", "LUT_M03", "LUT_M07", "LUT_M06", "LUT_M12", "LUT_M11", "LUT_M05", "LUT_M08", "LUT_M09"]
+        var textures = [Texture]()
+        for name in filterNames {
+            guard let image = UIImage(named: name)?.cgImage else {
+                continue
+            }
+            guard let texture = Texture.makeTexture(cgImage: image) else{
+                continue
+            }
+            textures.append(texture)
+        }
+        return textures
+    }
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         44
     }
@@ -61,6 +156,9 @@ class ViewController: UITableViewController {
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let videoEditor: DQVideoEditor = {
+            if indexPath.row == 1{
+                return multiLayerDemo()
+            }
             return simpleDemo()
         }()
         let playerItem = videoEditor.makePlayerItem()

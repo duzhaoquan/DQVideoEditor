@@ -65,6 +65,12 @@ class AVAssetSource: Source {
         }
         return asset.tracks(withMediaType: type)
     }
-    
+    var videoSize:CGSize?{
+        if let track = tracks(for: .video).first,track.mediaType == .video{
+            let realSize = CGSizeApplyAffineTransform(track.naturalSize, track.preferredTransform)
+            return CGSize(width: abs(realSize.width), height: abs(realSize.height) )
+        }
+        return nil
+    }
 
 }

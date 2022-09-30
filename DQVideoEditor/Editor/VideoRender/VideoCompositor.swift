@@ -35,6 +35,7 @@ class VideoCompositor: NSObject, AVVideoCompositing {
     enum PixelBufferRequestError: Error {
         case newRenderedPixelBufferForRequestFailure
     }
+    //
     func startRequest(_ asyncVideoCompositionRequest: AVAsynchronousVideoCompositionRequest) {
         autoreleasepool {
             renderingQueue.async {
