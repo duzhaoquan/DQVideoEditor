@@ -51,7 +51,7 @@ class ViewController: UITableViewController {
     
     func multiLayerDemo() -> DQVideoEditor{
         //layer1
-        guard var url = Bundle.main.url(forResource: "sea", withExtension: "mp4") else{
+        guard let url = Bundle.main.url(forResource: "sea", withExtension: "mp4") else{
             fatalError(" no url")
         }
         var asset = AVAsset(url: url)
@@ -129,6 +129,44 @@ class ViewController: UITableViewController {
     }
     
     
+    func textAnimationDemo() -> DQVideoEditor {
+        // 1. Layer 1
+        let url = Bundle.main.url(forResource: "cute", withExtension: "mp4")
+        let asset = AVAsset(url: url!)
+        let source = AVAssetSource(asset: asset)
+        source.selectedTimeRange = CMTimeRange(start: CMTime.zero, duration: asset.duration)
+        let timeRange = source.selectedTimeRange
+        let renderLayer1 = RenderLayer(timeRange: timeRange, source: source)
+        
+        // 2. Composition
+        let composition = RenderComposition()
+        composition.renderSize = renderSize
+        composition.layers = [renderLayer1]
+        composition.animationLayer = makeTextLayer()
+        
+        let editor = DQVideoEditor(renderComposition: composition)
+        
+        return editor
+    }
+    func makeTextLayer() -> TextAnimationLayer{
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        let attributes:[NSAttributedString.Key: Any] = [
+            .font: UIFont.boldSystemFont(ofSize: 120),
+            .foregroundColor: UIColor.white,
+            .paragraphStyle: paragraphStyle
+        ]
+        let attributedString = NSAttributedString(string: "Hello Beijing,I'm Come In",attributes: attributes)
+        let size = attributedString.boundingRect(with: renderSize,options: .usesLineFragmentOrigin, context: nil).size
+        let layer = TextOpacityAnimationLayer()
+        layer.attributedText = attributedString
+        layer.position = CGPoint(x: renderSize.width/2, y: renderSize.height/2)
+        layer.bounds = CGRect(origin: .zero, size: size)
+        
+        return layer
+    }
+    
+    
     func makeFilterTexture() -> [Texture]{
         let filterNames = ["LUT_M01", "LUT_M02", "LUT_M03", "LUT_M07", "LUT_M06", "LUT_M12", "LUT_M11", "LUT_M05", "LUT_M08", "LUT_M09"]
         var textures = [Texture]()
@@ -158,6 +196,8 @@ class ViewController: UITableViewController {
         let videoEditor: DQVideoEditor = {
             if indexPath.row == 1{
                 return multiLayerDemo()
+            }else if indexPath.row == 3 {
+                return textAnimationDemo()
             }
             return simpleDemo()
         }()
@@ -165,7 +205,17 @@ class ViewController: UITableViewController {
         playerItem.seekingWaitsForVideoCompositionRendering = true
         let controller = DQPlayerViewController(videoEditor: videoEditor)
         controller.player = AVPlayer(playerItem: playerItem)
+        
+        if let layer = makeSynchronizedLayer(playerItem: playerItem, videoEditor: videoEditor) {
+            controller.view.layer.addSublayer(layer)
+        }
         navigationController?.pushViewController(controller, animated: true)
+//        if let layer = videoEditor.renderComposition.animationLayer as? TextOpacityAnimationLayer {
+//            view.layer.addSublayer(layer)
+//            layer.addAnimations(to: layer.animationLayers)
+//            layer.backgroundColor = UIColor.blue.cgColor
+//        }
+        
     }
     
     
@@ -173,8 +223,21 @@ class ViewController: UITableViewController {
         guard let animationLayer = videoEditor.renderComposition.animationLayer else{
             return nil
         }
+        
         let layer = AVSynchronizedLayer(playerItem: playerItem)
-        return nil
+        layer.addSublayer(animationLayer)
+        layer.zPosition = 999
+        let videoSize = videoEditor.renderComposition.renderSize
+        
+        let screenSize = UIScreen.main.bounds.size
+        let videoRect = AVMakeRect(aspectRatio: videoSize, insideRect: CGRect(origin: .zero, size: screenSize))
+        layer.position = CGPoint(x: videoRect.midX, y: videoRect.maxY)
+        let  scale = fminf(Float(screenSize.width / videoSize.width), Float(screenSize.height / videoSize.height))
+        layer.setAffineTransform(CGAffineTransform(scaleX: CGFloat(scale), y: CGFloat(scale)))
+        layer.frame = videoRect
+        
+        
+        return layer
     }
 }
 
